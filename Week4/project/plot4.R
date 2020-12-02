@@ -1,14 +1,18 @@
-I found the codes from this website: https://rpubs.com/sf47/170076
+#I found the codes from this website: https://rpubs.com/sf47/170076
 
-NEI <- readRDS("exdata-data-NEI_data/summarySCC_PM25.rds")
-SCC <- readRDS("exdata-data-NEI_data/Source_Classification_Code.rds")
+combustion.coal <- grepl("Fuel Comb.*Coal", SCC$EI.Sector)
+combustion.coal.sources <- SCC[combustion.coal,]
+
+# Find emissions from coal combustion-related sources
+emissions.coal.combustion <- NEI[(NEI$SCC %in% combustion.coal.sources$SCC), ]
 require(dplyr)
-
-total.emissions <- summarise(group_by(NEI, year), Emissions=sum(Emissions))
-clrs <- c("red", "green", "blue", "yellow")
-x1<-barplot(height=total.emissions$Emissions/1000, names.arg=total.emissions$year,
-        xlab="years", ylab=expression('total PM'[2.5]*' emission in kilotons'),ylim=c(0,8000),
-        main=expression('Total PM'[2.5]*' emissions at various years in kilotons'),col=clrs)
-
-## Add text at top of bars
-text(x = x1, y = round(total.emissions$Emissions/1000,2), label = round(total.emissions$Emissions/1000,2), pos = 3, cex = 0.8, col = "black")
+emissions.coal.related <- summarise(group_by(emissions.coal.combustion, year), Emissions=sum(Emissions))
+require(ggplot2)
+ggplot(emissions.coal.related, aes(x=factor(year), y=Emissions/1000,fill=year, label = round(Emissions/1000,2))) +
+    geom_bar(stat="identity") +
+    #geom_bar(position = 'dodge')+
+    # facet_grid(. ~ year) +
+    xlab("year") +
+    ylab(expression("total PM"[2.5]*" emissions in kilotons")) +
+    ggtitle("Emissions from coal combustion-related sources in kilotons")+
+    geom_label(aes(fill = year),colour = "white", fontface = "bold")
