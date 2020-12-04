@@ -1,12 +1,18 @@
 #copied from: https://rpubs.com/sf47/170076
 
-baltcitymary.emissions<-NEI[(NEI$fips=="24510") & (NEI$type=="ON-ROAD"),]
 require(dplyr)
-baltcitymary.emissions.byyear <- summarise(group_by(baltcitymary.emissions, year), Emissions=sum(Emissions))
+baltcitymary.emissions<-summarise(group_by(filter(NEI, fips == "24510"& type == 'ON-ROAD'), year), Emissions=sum(Emissions))
+losangelscal.emissions<-summarise(group_by(filter(NEI, fips == "06037"& type == 'ON-ROAD'), year), Emissions=sum(Emissions))
+
+baltcitymary.emissions$County <- "Baltimore City, MD"
+losangelscal.emissions$County <- "Los Angeles County, CA"
+both.emissions <- rbind(baltcitymary.emissions, losangelscal.emissions)
+
 require(ggplot2)
-ggplot(baltcitymary.emissions.byyear, aes(x=factor(year), y=Emissions,fill=year, label = round(Emissions,2))) +
-    geom_bar(stat="identity") +
+ggplot(both.emissions, aes(x=factor(year), y=Emissions, fill=County,label = round(Emissions,2))) +
+    geom_bar(stat="identity") + 
+    facet_grid(County~., scales="free") +
+    ylab(expression("total PM"[2.5]*" emissions in tons")) + 
     xlab("year") +
-    ylab(expression("total PM"[2.5]*" emissions in tons")) +
-    ggtitle("Emissions from motor vehicle sources in Baltimore City")+
-    geom_label(aes(fill = year),colour = "white", fontface = "bold")
+    ggtitle(expression("Motor vehicle emission variation in Baltimore and Los Angeles in tons"))+
+    geom_label(aes(fill = County),colour = "white", fontface = "bold")
